@@ -106,6 +106,10 @@ def read_symbols(dir_name):
 
     for image_filename in dir_path.glob("*.jpg"):
         symbol_name = image_filename.stem
+        if symbol_name == "point":
+            symbol_name = '.'
+        elif symbol_name == "slash":
+            symbol_name = '/'
         symbol_image = cv2.imread(str(image_filename), 0)
         symbol = Tile(symbol_image, name=symbol_name)
         symbols[symbol_name] = symbol
@@ -130,7 +134,7 @@ def main():
     print(tiles[0][0])
     print('---')
     for s in symbols:
-        print(s, similar_coef(symbols[s], tiles[0][0]))
+        print(symbols[s].name, similar_coef(symbols[s], tiles[0][0]))
 
     result_text = [[None for j in range(m)] for i in range(n)]
 
@@ -142,7 +146,7 @@ def main():
     print(type(result_text[0][0].image))
     #'''
     for i in range(n):
-        print(Tile(np.concatenate([result_text[i][j].image for j in range(m)], axis=1)))
+        print(''.join([result_text[i][j].name for j in range(m)]))
     '''
     for i in range(n):
         print(Tile(np.concatenate([tiles[i][j].image for j in range(m)], axis=1)))

@@ -41,6 +41,10 @@ print(new)
 
 for i in SYMBOLS_PIXELS:
     result = to_image(SYMBOLS_PIXELS[i])
-    print(i)
-    cv2.imwrite('./data/symbols/{}.jpg'.format(i), result, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    filename = './data/symbols/{}.jpg'.format(i)
+    print(i, filename)
+    cv2.imwrite(
+        filename,
+        result,
+        [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
