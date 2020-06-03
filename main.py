@@ -12,6 +12,7 @@ def main():
     big_image = cv2.imread(args.image_filename, 0) #as grayscale
 
     big_image = prepare_image(big_image)
+    print("prepared!")
 
     tiles = tile_image(big_image) # list of lists
     n = len(tiles)
@@ -23,15 +24,15 @@ def main():
     '''
     result_text = [[None for j in range(m)] for i in range(n)]
 
+    print("go!")
+
     for i in range(n):
         for j in range(m):
             ascii_symbol = find_best_symbol(tiles[i][j], symbols)
             result_text[i][j] = ascii_symbol
+        print(''.join([result_text[i][j].name for j in range(m)]))
 
     print(type(result_text[0][0].image))
-    #'''
-    for i in range(n):
-        print(''.join([result_text[i][j].name for j in range(m)]))
     '''
     for i in range(n):
         print(Tile(np.concatenate([tiles[i][j].image for j in range(m)], axis=1)))

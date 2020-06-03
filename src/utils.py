@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 
 import numpy as np
@@ -10,8 +11,9 @@ TILE_SIZE = (7, 7)
 
 class Tile:
     def __init__(self, image, name=None):
-        self.image = image
+        self.image = image / 255.
         self.name = name
+        self.handled = self.handle()
 
     def __str__(self):
         n, m = self.image.shape
@@ -19,7 +21,7 @@ class Tile:
 
         for i in range(n):
             for j in range(m):
-                if self.image[i][j] < 127:
+                if self.image[i][j] < 64:
                     result.append('.')
                 else:
                     result.append('#')
@@ -33,28 +35,30 @@ class Tile:
         '''
         SIFT, SURF transforms
         '''
-        pass
+        cv2.imwrite("./data/tmp.jpg", self.image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        img = cv2.imread("./data/tmp.jpg", flags=cv2.IMREAD_GRAYSCALE)
+        img = np.abs(img)
+        result = cv2.cornerHarris(img, 1, 1, 0.01)
+        norm = np.linalg.norm(result)
+        if norm != 0:
+            result /= norm
+
+        return result
+
+
+def similar_coef(tile_1, tile_2):
+    mse_i = mean_squared_error(tile_1.image, tile_2.image)
+    mse_h = mean_squared_error(tile_1.handled, tile_2.handled)
+
+    return (mse_i - mse_h) / 2
 
 
 def prepare_image(image):
     n, m = image.shape
-    print('!', n, m)
     image = cv2.resize(image, (m * 2, n), interpolation=cv2.INTER_AREA)
-    n, m = image.shape
-    print('!', n, m)
-    result = [[None for j in range(m)] for i in range(n)]
+    result = np.array(list(map(lambda x: list(map(int, x)), image)))
 
-    for i in range(n):
-        for j in range(m):
-            if image[i][j] < 127:
-                result[i][j] = 255
-            else:
-                result[i][j] = 0
-        #result.append('\n')
-
-    #result.pop()
-
-    return np.array(result)
+    return result
 
 
 def tile_image(big_image, tile_size=TILE_SIZE):
@@ -93,11 +97,6 @@ def read_symbols(dir_name):
         symbols[symbol_name] = symbol
 
     return symbols
-
-
-def similar_coef(tile_1, tile_2):
-    mse = mean_squared_error(tile_1.image, tile_2.image)
-    return mse
 
 
 def find_best_symbol(tile, symbols):
