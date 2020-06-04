@@ -81,9 +81,7 @@ def similar_coef(tile_1, tile_2, mode):
     if mode == 'mse':
         mse_i = mean_squared_error(tile_1.image, tile_2.image)
         mse_h = mean_squared_error(tile_1.hcd, tile_2.hcd)
-        #mse_skel = mean_squared_error(tile_1.skel, tile_2.skel)
         result = mse_i + mse_h * 4
-        result /= 5
 
         return result
 
@@ -91,7 +89,6 @@ def similar_coef(tile_1, tile_2, mode):
         area_i = abs(np.sum(tile_1.image) - np.sum(tile_2.image))
         mse_h = mean_squared_error(tile_1.hcd, tile_2.hcd)
         result = area_i + mse_h
-        result /= 2
 
         return result
 
@@ -99,7 +96,8 @@ def similar_coef(tile_1, tile_2, mode):
         area_i = abs(np.sum(tile_1.image) - np.sum(tile_2.image))
         mse_i = mean_squared_error(tile_1.image, tile_2.image)
         mse_h = mean_squared_error(tile_1.hcd, tile_2.hcd)
-        result = area_i / 10 + mse_i + mse_h * 3
+        mse_skel = mean_squared_error(tile_1.skel, tile_2.skel)
+        result = area_i / 10 + mse_i + mse_h * 3 + mse_skel
 
         return result
 

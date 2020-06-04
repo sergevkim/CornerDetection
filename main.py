@@ -31,7 +31,7 @@ def main():
 
     for i in range(n):
         for j in range(m):
-            ascii_symbol = find_best_symbol(tiles[i][j], symbols, mode="mixed")
+            ascii_symbol = find_best_symbol(tiles[i][j], symbols, mode="mse")
             result_text[i][j] = ascii_symbol
         print(''.join([result_text[i][j].name for j in range(m)]))
 
