@@ -12,8 +12,11 @@ TILE_SIZE = (7, 7)
 class Tile:
     def __init__(self, image, name=None):
         self.image = image / 255.
+        self.area = np.size(image)
         self.name = name
-        self.handled = self.handle()
+        self.hcd = self.harris_corner_detector()
+        self.skel = self.skeleton()
+        self.sift = self.scale_invariant_feature_tranform()
 
     def __str__(self):
         n, m = self.image.shape
@@ -31,10 +34,7 @@ class Tile:
 
         return ''.join(result)
 
-    def handle(self):
-        '''
-        SIFT, SURF transforms
-        '''
+    def harris_corner_detector(self):
         cv2.imwrite("./data/tmp.jpg", self.image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         img = cv2.imread("./data/tmp.jpg", flags=cv2.IMREAD_GRAYSCALE)
         img = np.abs(img)
@@ -45,20 +45,51 @@ class Tile:
 
         return result
 
+    def skeleton(self):
+        cv2.imwrite("./data/tmp.jpg", self.image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        img = cv2.imread("./data/tmp.jpg", flags=cv2.IMREAD_GRAYSCALE)
+        skel = np.zeros_like(img)
+        size = np.size(img)
 
-def similar_coef(tile_1, tile_2, mode='mixed'):
+        _, img = cv2.threshold(img, 127, 255, 0)
+        element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+
+        while True:
+            eroded = cv2.erode(img, element)
+            tmp = cv2.dilate(eroded, element)
+            tmp = cv2.subtract(img, tmp)
+            skel = cv2.bitwise_or(skel, tmp)
+            img = eroded.copy()
+
+            zeros = size - cv2.countNonZero(img)
+            if zeros == size:
+                break
+
+        return skel
+
+    def scale_invariant_feature_tranform(self):
+        cv2.imwrite("./data/tmp.jpg", self.image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        img = cv2.imread("./data/tmp.jpg", flags=cv2.IMREAD_GRAYSCALE)
+
+        sift = cv2.xfeatures2d.SIFT_create()
+        kp, des = sift.detectAndCompute(img, None)
+
+        return kp
+
+
+def similar_coef(tile_1, tile_2, mode):
     if mode == 'mse':
         mse_i = mean_squared_error(tile_1.image, tile_2.image)
-        mse_h = mean_squared_error(tile_1.handled, tile_2.handled)
-        #mse_h = mse_i
-        result = mse_i + mse_h
-        result /= 2
+        mse_h = mean_squared_error(tile_1.hcd, tile_2.hcd)
+        #mse_skel = mean_squared_error(tile_1.skel, tile_2.skel)
+        result = mse_i + mse_h * 4
+        result /= 5
 
         return result
 
     elif mode == 'area':
         area_i = abs(np.sum(tile_1.image) - np.sum(tile_2.image))
-        mse_h = mean_squared_error(tile_1.handled, tile_2.handled)
+        mse_h = mean_squared_error(tile_1.hcd, tile_2.hcd)
         result = area_i + mse_h
         result /= 2
 
@@ -67,9 +98,8 @@ def similar_coef(tile_1, tile_2, mode='mixed'):
     elif mode == 'mixed':
         area_i = abs(np.sum(tile_1.image) - np.sum(tile_2.image))
         mse_i = mean_squared_error(tile_1.image, tile_2.image)
-        mse_h = mean_squared_error(tile_1.handled, tile_2.handled)
-        result = area_i + mse_i + mse_h * 2
-        result /= 4
+        mse_h = mean_squared_error(tile_1.hcd, tile_2.hcd)
+        result = area_i / 10 + mse_i + mse_h * 3
 
         return result
 
@@ -120,16 +150,16 @@ def read_symbols(dir_name):
     return symbols
 
 
-def find_best_symbol(tile, symbols):
+def find_best_symbol(tile, symbols, mode):
     '''
     A way to find the best symbol from the symbols list
     '''
-    best_coef = similar_coef(tile, symbols['!'])
+    best_coef = similar_coef(tile, symbols['!'], mode)
     best_symbol = symbols['!']
 
     for i, symbol_name in enumerate(symbols):
         symbol = symbols[symbol_name]
-        cur_coef = similar_coef(tile, symbol)
+        cur_coef = similar_coef(tile, symbol, mode)
         if cur_coef < best_coef:
             best_coef = cur_coef
             best_symbol = symbol
