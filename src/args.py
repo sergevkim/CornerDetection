@@ -5,6 +5,10 @@ from pathlib import Path
 def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '--resize',
+        action='store_true',
+        help="resize image to 420x560")
+    parser.add_argument(
         '--image-filename',
         default="{}/data/basket/serge.jpg".format(Path.cwd()),
         type=str,

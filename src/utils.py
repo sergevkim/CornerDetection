@@ -46,17 +46,38 @@ class Tile:
         return result
 
 
-def similar_coef(tile_1, tile_2):
-    mse_i = mean_squared_error(tile_1.image, tile_2.image)
-    mse_h = mean_squared_error(tile_1.handled, tile_2.handled)
+def similar_coef(tile_1, tile_2, mode='mixed'):
+    if mode == 'mse':
+        mse_i = mean_squared_error(tile_1.image, tile_2.image)
+        mse_h = mean_squared_error(tile_1.handled, tile_2.handled)
+        #mse_h = mse_i
+        result = mse_i + mse_h
+        result /= 2
 
-    return (mse_i - mse_h) / 2
+        return result
+
+    elif mode == 'area':
+        area_i = abs(np.sum(tile_1.image) - np.sum(tile_2.image))
+        mse_h = mean_squared_error(tile_1.handled, tile_2.handled)
+        result = area_i + mse_h
+        result /= 2
+
+        return result
+
+    elif mode == 'mixed':
+        area_i = abs(np.sum(tile_1.image) - np.sum(tile_2.image))
+        mse_i = mean_squared_error(tile_1.image, tile_2.image)
+        mse_h = mean_squared_error(tile_1.handled, tile_2.handled)
+        result = area_i + mse_i + mse_h * 2
+        result /= 4
+
+        return result
 
 
 def prepare_image(image):
     n, m = image.shape
     image = cv2.resize(image, (m * 2, n), interpolation=cv2.INTER_AREA)
-    result = np.array(list(map(lambda x: list(map(int, x)), image)))
+    result = np.array(list(map(lambda row: list(map(lambda x: int(255 if x >= 248 else x), row)), image)))
 
     return result
 

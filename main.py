@@ -11,6 +11,9 @@ def main():
 
     big_image = cv2.imread(args.image_filename, 0) #as grayscale
 
+    if args.resize:
+        big_image = cv2.resize(big_image, (420, 560)) #as grayscale
+
     big_image = prepare_image(big_image)
     print("prepared!")
 
